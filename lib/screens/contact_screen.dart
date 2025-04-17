@@ -202,7 +202,10 @@ class _ContactScreenState extends State<ContactScreen> {
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
+              )
+              .animate()
+              .fadeIn(duration: 500.ms)
+              .slideX(begin: -0.2, end: 0),
               const SizedBox(height: 30),
               TextFormField(
                 controller: _nameController,
@@ -217,7 +220,10 @@ class _ContactScreenState extends State<ContactScreen> {
                   }
                   return null;
                 },
-              ),
+              )
+              .animate()
+              .fadeIn(delay: 100.ms, duration: 500.ms)
+              .slideY(begin: 0.2, end: 0),
               const SizedBox(height: 20),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +244,10 @@ class _ContactScreenState extends State<ContactScreen> {
                         }
                         return null;
                       },
-                    ),
+                    )
+                    .animate()
+                    .fadeIn(delay: 200.ms, duration: 500.ms)
+                    .slideY(begin: 0.2, end: 0),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -249,7 +258,10 @@ class _ContactScreenState extends State<ContactScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.phone),
                       ),
-                    ),
+                    )
+                    .animate()
+                    .fadeIn(delay: 300.ms, duration: 500.ms)
+                    .slideY(begin: 0.2, end: 0),
                   ),
                 ],
               ),
@@ -334,12 +346,16 @@ class _ContactScreenState extends State<ContactScreen> {
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
-            ),
+            )
+            .animate()
+            .fadeIn(duration: 500.ms)
+            .slideX(begin: 0.2, end: 0),
             const SizedBox(height: 30),
             _buildContactItem(
               FontAwesomeIcons.locationDot,
               'Address',
               'Gravity Indoor Trampoline Park\nPort Elizabeth, South Africa',
+              index: 0,
             ),
             const SizedBox(height: 20),
             _buildContactItem(
@@ -348,6 +364,7 @@ class _ContactScreenState extends State<ContactScreen> {
               '+27 41 000 0000',
               isLink: true,
               onTap: () => _launchUrl('tel:+27410000000'),
+              index: 1,
             ),
             const SizedBox(height: 20),
             _buildContactItem(
@@ -356,6 +373,7 @@ class _ContactScreenState extends State<ContactScreen> {
               'info@gravitype.co.za',
               isLink: true,
               onTap: () => _launchUrl('mailto:info@gravitype.co.za'),
+              index: 2,
             ),
             const SizedBox(height: 20),
             _buildContactItem(
@@ -364,6 +382,7 @@ class _ContactScreenState extends State<ContactScreen> {
               'www.gravitype.co.za',
               isLink: true,
               onTap: () => _launchUrl('https://gravitype.co.za'),
+              index: 3,
             ),
             const SizedBox(height: 30),
             const Text(
@@ -373,14 +392,17 @@ class _ContactScreenState extends State<ContactScreen> {
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
-            ),
+            )
+            .animate()
+            .fadeIn(delay: 800.ms)
+            .slideX(begin: 0.2, end: 0),
             const SizedBox(height: 15),
             Row(
               children: [
-                _buildSocialIcon(FontAwesomeIcons.facebook),
-                _buildSocialIcon(FontAwesomeIcons.instagram),
-                _buildSocialIcon(FontAwesomeIcons.twitter),
-                _buildSocialIcon(FontAwesomeIcons.youtube),
+                _buildSocialIcon(FontAwesomeIcons.facebook, 0),
+                _buildSocialIcon(FontAwesomeIcons.instagram, 1),
+                _buildSocialIcon(FontAwesomeIcons.twitter, 2),
+                _buildSocialIcon(FontAwesomeIcons.youtube, 3),
               ],
             ),
           ],
@@ -388,13 +410,14 @@ class _ContactScreenState extends State<ContactScreen> {
       ),
     ).animate().fadeIn(delay: 300.ms);
   }
-
+  
   Widget _buildContactItem(
     IconData icon,
     String title,
     String content, {
     bool isLink = false,
     VoidCallback? onTap,
+    required int index,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,7 +437,7 @@ class _ContactScreenState extends State<ContactScreen> {
               margin: const EdgeInsets.only(top: 3),
               child: FaIcon(
                 icon,
-                color: Colors.white,
+                color: const Color(0xFFF36122),
                 size: 16,
               ),
             ),
@@ -441,10 +464,13 @@ class _ContactScreenState extends State<ContactScreen> {
           ],
         ),
       ],
-    );
+    )
+    .animate()
+    .fadeIn(delay: Duration(milliseconds: 200 * index), duration: 500.ms)
+    .slideX(begin: 0.2, end: 0);
   }
 
-  Widget _buildSocialIcon(IconData icon) {
+  Widget _buildSocialIcon(IconData icon, int index) {
     return Container(
       margin: const EdgeInsets.only(right: 15),
       decoration: BoxDecoration(
@@ -464,82 +490,111 @@ class _ContactScreenState extends State<ContactScreen> {
           } else {
             url = Uri.parse('https://www.youtube.com/gravityparks');
           }
-          
+
           if (await canLaunchUrl(url)) {
             await launchUrl(url);
           }
         },
       ),
-    );
-  }
-
-  Future<void> _launchUrl(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
+    )
+    .animate()
+    .fadeIn(delay: Duration(milliseconds: 400 + 150 * index))
+    .slideX(begin: 0.5, end: 0);
   }
 
   Widget _buildMapSection(bool isMobile) {
     return Container(
       height: 400,
       width: double.infinity,
-      color: Colors.grey[300],
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.map,
-              size: 50,
-              color: Color(0xFFF36122),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'MAP PLACEHOLDER',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      color: Colors.grey[200],
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.1),
+                BlendMode.srcOver,
+              ),
+              child: Image.asset(
+                'images/map.jpg',
+                fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 10),
-            const Text(
-              'Interactive map would be embedded here',
-              style: TextStyle(
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () => _launchUrl('https://maps.google.com'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF87C540),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              ),
-              icon: const Icon(Icons.directions),
-              label: const Text(
-                'GET DIRECTIONS',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+          ),
+          Positioned(
+            top: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Text(
+                  'FIND US',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            )
+            .animate()
+            .fadeIn(duration: 500.ms)
+            .slideY(begin: -0.5, end: 0),
+          ),
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: InkWell(
+              onTap: () => _launchUrl('https://maps.google.com/?q=Gravity+Indoor+Trampoline+Park'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF36122),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: const [
+                    Icon(
+                      Icons.directions,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'GET DIRECTIONS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 500.ms, delay: 400.ms)
+            .slideY(begin: 0.5, end: 0),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildOperatingHoursSection(bool isMobile) {
-    final hours = [
-      {'day': 'Monday - Thursday', 'hours': '9:00 AM - 8:00 PM'},
-      {'day': 'Friday', 'hours': '9:00 AM - 10:00 PM'},
-      {'day': 'Saturday', 'hours': '9:00 AM - 10:00 PM'},
-      {'day': 'Sunday', 'hours': '10:00 AM - 8:00 PM'},
-      {'day': 'Public Holidays', 'hours': '10:00 AM - 8:00 PM'},
-    ];
-
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 80,
@@ -554,100 +609,90 @@ class _ContactScreenState extends State<ContactScreen> {
               fontSize: isMobile ? 24 : 32,
               fontWeight: FontWeight.bold,
             ),
-          ),
+          )
+          .animate()
+          .fadeIn(duration: 500.ms)
+          .slideY(begin: 0.3, end: 0),
+          const SizedBox(height: 20),
+          const Text(
+            'Plan Your Visit',
+            style: TextStyle(
+              color: Color(0xFFF36122),
+              fontSize: 18,
+            ),
+          )
+          .animate()
+          .fadeIn(duration: 500.ms, delay: 200.ms)
+          .slideY(begin: 0.3, end: 0),
           const SizedBox(height: 50),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+          isMobile
+              ? Column(
+                  children: [
+                    _buildHoursCard('Weekdays', '10:00 AM - 8:00 PM', 0),
+                    const SizedBox(height: 20),
+                    _buildHoursCard('Weekends', '9:00 AM - 10:00 PM', 1),
+                    const SizedBox(height: 20),
+                    _buildHoursCard('Public Holidays', '9:00 AM - 9:00 PM', 2),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: _buildHoursCard('Weekdays', '10:00 AM - 8:00 PM', 0)),
+                    const SizedBox(width: 20),
+                    Expanded(child: _buildHoursCard('Weekends', '9:00 AM - 10:00 PM', 1)),
+                    const SizedBox(width: 20),
+                    Expanded(child: _buildHoursCard('Public Holidays', '9:00 AM - 9:00 PM', 2)),
+                  ],
                 ),
-              ],
-            ),
-            child: Column(
-              children: hours.map((item) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 15,
-                    horizontal: 30,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey[200]!,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        item['day']!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        item['hours']!,
-                        style: const TextStyle(
-                          color: Color(0xFFF36122),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ).animate().fadeIn(),
-          const SizedBox(height: 40),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F8F8),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF87C540)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: Color(0xFF87C540),
-                  size: 30,
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Special Notice',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Hours may vary on holiday weekends. Please check our social media pages for the most up-to-date information.',
-                        style: TextStyle(
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 200.ms),
         ],
       ),
     );
+  }
+
+  Widget _buildHoursCard(String day, String hours, int index) {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.access_time,
+              color: Color(0xFFF36122),
+              size: 40,
+            ),
+            const SizedBox(height: 15),
+            Text(
+              day,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              hours,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    )
+    .animate()
+    .fadeIn(delay: Duration(milliseconds: 300 * index))
+    .slideY(begin: 0.3, end: 0);
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
   }
 } 

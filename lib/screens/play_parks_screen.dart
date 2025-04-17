@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:go_router/go_router.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'dart:math' as math;
 
 import '../widgets/page_layout.dart';
 
@@ -49,14 +51,24 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
       child: Stack(
         children: [
           Positioned.fill(
-            child: Opacity(
-              opacity: 0.7,
-              child: Image.asset(
-                'images/foam.jpg',
-                fit: BoxFit.cover,
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.5),
+                BlendMode.srcOver,
+              ),
+              child: Opacity(
+                opacity: 0.7,
+                child: Image.asset(
+                  'images/foam.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
+          
+          // Animated particles
+          _buildPlayfulParticles(),
+          
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -67,14 +79,57 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
                     color: Colors.white,
                     fontSize: isMobile ? 32 : 48,
                     fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10.0,
+                        color: const Color(0xFFF36122).withOpacity(0.7),
+                        offset: const Offset(5.0, 5.0),
+                      ),
+                    ],
                   ),
-                ).animate().fadeIn(duration: 500.ms),
+                )
+                .animate()
+                .fadeIn(duration: 500.ms)
+                .shimmer(delay: 500.ms, duration: 1800.ms),
                 const SizedBox(height: 20),
                 Container(
-                  width: 100,
+                  width: isMobile ? 80 : 100,
                   height: 5,
-                  color: const Color(0xFFF36122),
-                ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF36122), Color(0xFF87C540)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 500.ms, delay: 200.ms)
+                .scale(
+                  begin: const Offset(0, 1),
+                  end: const Offset(1, 1),
+                  alignment: Alignment.centerLeft,
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: const Color(0xFFF36122), width: 2),
+                  ),
+                  child: Text(
+                    'Fun for Kids of All Ages',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 16 : 18,
+                    ),
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 500.ms, delay: 400.ms)
+                .slideY(begin: 0.3, end: 0)
+                .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                .shimmer(delay: 800.ms, duration: 1800.ms),
               ],
             ),
           ),
@@ -83,184 +138,407 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
     );
   }
 
+  Widget _buildPlayfulParticles() {
+    return Stack(
+      children: List.generate(30, (index) {
+        final random = math.Random();
+        final size = random.nextDouble() * 12 + 8;
+        final x = random.nextDouble() * MediaQuery.of(context).size.width;
+        final y = random.nextDouble() * (ResponsiveBreakpoints.of(context).smallerThan(TABLET) ? 300 : 400);
+        final isBall = random.nextBool();
+        
+        return Positioned(
+          left: x,
+          top: y,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: [
+                const Color(0xFFF36122),
+                const Color(0xFF87C540),
+                Colors.yellow,
+                Colors.pink,
+                Colors.blue,
+                Colors.purple,
+              ][random.nextInt(6)].withOpacity(0.7),
+              shape: isBall ? BoxShape.circle : BoxShape.rectangle,
+              borderRadius: !isBall ? BorderRadius.circular(size / 4) : null,
+            ),
+          )
+          .animate(onPlay: (controller) => controller.repeat())
+          .scale(
+            begin: const Offset(0.1, 0.1),
+            end: const Offset(1.2, 1.2),
+            duration: Duration(milliseconds: 500 + random.nextInt(1000)),
+          )
+          .then()
+          .rotate(
+            begin: 0,
+            end: random.nextDouble() * 2 * math.pi,
+            duration: Duration(milliseconds: 500 + random.nextInt(1000)),
+          )
+          .then()
+          .move(
+            begin: const Offset(0, 0),
+            end: Offset(random.nextDouble() * 100 - 50, 100 + random.nextDouble() * 100),
+            duration: Duration(milliseconds: 1000 + random.nextInt(2000)),
+            curve: Curves.easeOutQuad,
+          )
+          .then()
+          .fadeOut(duration: 500.ms),
+        );
+      }),
+    );
+  }
+
   Widget _buildIntroSection(bool isMobile) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 80,
-        vertical: 80,
-      ),
-      child: Column(
-        children: [
-          Text(
-            'OUR INDOOR PLAY PARKS',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: isMobile ? 24 : 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: isMobile ? double.infinity : 800,
-            ),
-            child: const Text(
-              'Gravity offers two exciting indoor play park locations in Port Elizabeth - Baywest Mall and Walmer Park Shopping Centre. Our play parks are the perfect place for children to have fun, burn energy, and develop new skills in a safe and supervised environment.',
+    return VisibilityDetector(
+      key: const Key('intro-section'),
+      onVisibilityChanged: (visibilityInfo) {
+        if (visibilityInfo.visibleFraction > 0.2) {
+          setState(() {});
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 20 : 80,
+          vertical: 80,
+        ),
+        child: Column(
+          children: [
+            Text(
+              'GRAVITY PLAY PARKS',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: isMobile ? 24 : 32,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 800.ms)
+            .moveY(begin: 30, end: 0),
+            const SizedBox(height: 20),
+            const Text(
+              'Perfect for children of all ages, our Play Parks offer a safe, supervised environment where kids can have fun and parents can relax.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
                 color: Color(0xFFF36122),
-                height: 1.5,
               ),
+            )
+            .animate()
+            .fadeIn(delay: 200.ms, duration: 800.ms),
+            const SizedBox(height: 50),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (isMobile) {
+                  return Column(
+                    children: [
+                      _buildIntroFeature(
+                        'Safe Environment',
+                        'Our play parks are designed with safety as the top priority, with soft surfaces and rounded edges throughout.',
+                        Icons.security,
+                        0,
+                      ),
+                      const SizedBox(height: 30),
+                      _buildIntroFeature(
+                        'Multiple Locations',
+                        'With locations at both Baywest Mall and Walmer Park Shopping Centre, we\'re always nearby.',
+                        Icons.location_on,
+                        1,
+                      ),
+                      const SizedBox(height: 30),
+                      _buildIntroFeature(
+                        'Affordable Fun',
+                        'Great value entertainment for children of all ages, with party packages available.',
+                        Icons.attach_money,
+                        2,
+                      ),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _buildIntroFeature(
+                          'Safe Environment',
+                          'Our play parks are designed with safety as the top priority, with soft surfaces and rounded edges throughout.',
+                          Icons.security,
+                          0,
+                        ),
+                      ),
+                      const SizedBox(width: 30),
+                      Expanded(
+                        child: _buildIntroFeature(
+                          'Multiple Locations',
+                          'With locations at both Baywest Mall and Walmer Park Shopping Centre, we\'re always nearby.',
+                          Icons.location_on,
+                          1,
+                        ),
+                      ),
+                      const SizedBox(width: 30),
+                      Expanded(
+                        child: _buildIntroFeature(
+                          'Affordable Fun',
+                          'Great value entertainment for children of all ages, with party packages available.',
+                          Icons.attach_money,
+                          2,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
-          ),
-          const SizedBox(height: 40),
-          isMobile
-              ? Column(
-                  children: [
-                    _buildLocationCard('Baywest Play Park'),
-                    const SizedBox(height: 20),
-                    _buildLocationCard('Walmer Park Play Park'),
-                  ],
-                )
-              : Row(
-                  children: [
-                    Expanded(
-                      child: _buildLocationCard('Baywest Play Park'),
-                    ),
-                    const SizedBox(width: 30),
-                    Expanded(
-                      child: _buildLocationCard('Walmer Park Play Park'),
-                    ),
-                  ],
-                ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLocationCard(String title) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: InkWell(
-        onTap: () {},
-        child: Container(
-          padding: const EdgeInsets.all(30),
+  Widget _buildIntroFeature(String title, String description, IconData icon, int index) {
+    return Column(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            image: DecorationImage(
-              image: const AssetImage('images/walmer-hero.jpg'),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.6),
-                BlendMode.darken,
-              ),
-            ),
+            color: const Color(0xFFF36122).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(40),
           ),
-          height: 200,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 15),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF36122),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Text(
-                  'VIEW DETAILS',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          child: Icon(
+            icon,
+            color: const Color(0xFFF36122),
+            size: 40,
           ),
-        ),
-      ),
-    ).animate().fadeIn();
+        )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 300 * index))
+        .scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1))
+        .shimmer(delay: Duration(milliseconds: 300 * index + 500), duration: 1800.ms),
+        const SizedBox(height: 20),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 300 * index + 200)),
+        const SizedBox(height: 10),
+        Text(
+          description,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            height: 1.5,
+            color: Colors.grey[600],
+          ),
+        )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 300 * index + 400))
+        .slideY(begin: 0.2, end: 0, delay: Duration(milliseconds: 300 * index + 400)),
+      ],
+    );
   }
 
-  Widget _buildLocationSection(bool isMobile, String title, bool isFirst) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 80,
-        vertical: 50,
-      ),
-      color: isFirst ? Colors.white : const Color(0xFFF8F8F8),
-      child: Column(
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: isMobile ? 24 : 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Fun & Adventure for Kids',
-            style: TextStyle(
-              color: Color(0xFFF36122),
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 40),
-          isMobile
-              ? Column(
-                  children: [
-                    ClipRRect(
+  Widget _buildLocationCard(String title, int index) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          bool isHovered = false;
+          
+          return MouseRegion(
+            onEnter: (_) => setState(() => isHovered = true),
+            onExit: (_) => setState(() => isHovered = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              transform: isHovered ? (Matrix4.identity()..scale(1.05)) : Matrix4.identity(),
+              child: Card(
+                elevation: isHovered ? 12 : 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: InkWell(
+                  onTap: () {},
+                  splashColor: Colors.orange.withOpacity(0.3),
+                  highlightColor: Colors.orange.withOpacity(0.1),
+                  child: Container(
+                    padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        'images/baywest.jpg',
+                      image: DecorationImage(
+                        image: AssetImage(index == 0 ? 'images/baywest.jpg' : 'images/walmer-hero.jpg'),
                         fit: BoxFit.cover,
-                        height: 300,
-                        width: double.infinity,
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    _buildLocationInfo(title),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          'images/walmer.jpg',
-                          fit: BoxFit.cover,
-                          height: 400,
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(isHovered ? 0.5 : 0.6),
+                          BlendMode.darken,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 50),
-                    Expanded(
-                      flex: 7,
-                      child: _buildLocationInfo(title),
+                    height: 200,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          transform: isHovered ? (Matrix4.identity()..scale(1.1)) : Matrix4.identity(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isHovered 
+                              ? const Color(0xFF87C540) 
+                              : const Color(0xFFF36122),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: isHovered 
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFFF36122).withOpacity(0.5),
+                                    blurRadius: 15,
+                                    spreadRadius: 1,
+                                  )
+                                ] 
+                              : [],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'VIEW DETAILS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                width: isHovered ? 10 : 0,
+                              ),
+                              AnimatedOpacity(
+                                opacity: isHovered ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: const Icon(
+                                  Icons.arrow_forward, 
+                                  color: Colors.white, 
+                                  size: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-        ],
+              ),
+            ),
+          );
+        },
+      ),
+    )
+    .animate()
+    .fadeIn(delay: Duration(milliseconds: 300 * index))
+    .slideX(begin: index == 0 ? -0.3 : 0.3, end: 0, duration: 800.ms);
+  }
+
+  Widget _buildLocationSection(bool isMobile, String title, bool isFirst) {
+    return VisibilityDetector(
+      key: Key('location-section-${title.replaceAll(" ", "-")}'),
+      onVisibilityChanged: (visibilityInfo) {
+        if (visibilityInfo.visibleFraction > 0.2) {
+          setState(() {});
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 20 : 80,
+          vertical: 50,
+        ),
+        color: isFirst ? Colors.white : const Color(0xFFF8F8F8),
+        child: Column(
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: isMobile ? 24 : 32,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 800.ms)
+            .moveY(begin: 30, end: 0),
+            const SizedBox(height: 10),
+            const Text(
+              'Fun & Adventure for Kids',
+              style: TextStyle(
+                color: Color(0xFFF36122),
+                fontSize: 18,
+              ),
+            )
+            .animate()
+            .fadeIn(delay: 200.ms)
+            .moveY(begin: 20, end: 0),
+            const SizedBox(height: 40),
+            isMobile
+                ? Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset(
+                          title.contains('Baywest') ? 'images/baywest.jpg' : 'images/walmer.jpg',
+                          fit: BoxFit.cover,
+                          height: 300,
+                          width: double.infinity,
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(delay: 300.ms)
+                      .slideY(begin: 0.3, end: 0),
+                      const SizedBox(height: 30),
+                      _buildLocationInfo(title),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            title.contains('Baywest') ? 'images/baywest.jpg' : 'images/walmer.jpg',
+                            fit: BoxFit.cover,
+                            height: 400,
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(delay: 300.ms)
+                        .slideX(begin: isFirst ? -0.3 : 0.3, end: 0),
+                      ),
+                      const SizedBox(width: 50),
+                      Expanded(
+                        flex: 7,
+                        child: _buildLocationInfo(title),
+                      ),
+                    ],
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -291,7 +569,10 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
-        ),
+        )
+        .animate()
+        .fadeIn(delay: 400.ms)
+        .slideX(begin: 0.3, end: 0),
         const SizedBox(height: 15),
         Text(
           title == 'Baywest Play Park'
@@ -301,7 +582,10 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
             height: 1.6,
             fontSize: 16,
           ),
-        ),
+        )
+        .animate()
+        .fadeIn(delay: 500.ms)
+        .slideX(begin: 0.3, end: 0),
         const SizedBox(height: 30),
         const Text(
           'Features',
@@ -309,26 +593,40 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
-        ),
+        )
+        .animate()
+        .fadeIn(delay: 600.ms)
+        .slideX(begin: 0.3, end: 0),
         const SizedBox(height: 15),
-        ...features.map((feature) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.check_circle,
-                color: Color(0xFF87C540),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                feature,
-                style: const TextStyle(
-                  fontSize: 16,
+        ...features.asMap().entries.map((entry) {
+          final index = entry.key;
+          final feature = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Color(0xFF87C540),
+                )
+                .animate(delay: Duration(milliseconds: 700 + (index * 100)))
+                .scale(
+                  begin: const Offset(0, 0),
+                  end: const Offset(1, 1),
+                  duration: 500.ms,
+                  curve: Curves.elasticOut,
                 ),
-              ),
-            ],
-          ),
-        )),
+                const SizedBox(width: 10),
+                Text(
+                  feature,
+                  style: const TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
         const SizedBox(height: 30),
         ResponsiveBreakpoints.of(context).smallerThan(TABLET)
         ? Column(
@@ -352,7 +650,10 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
                     ),
                   ),
                 ],
-              ),
+              )
+              .animate()
+              .fadeIn(delay: 800.ms)
+              .slideX(begin: 0.3, end: 0),
               const SizedBox(height: 25),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +673,10 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
                     ),
                   ),
                 ],
-              ),
+              )
+              .animate()
+              .fadeIn(delay: 900.ms)
+              .slideX(begin: 0.3, end: 0),
             ],
           )
         : Row(
@@ -395,7 +699,10 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
                   ),
                 ),
               ],
-            ),
+            )
+            .animate()
+            .fadeIn(delay: 800.ms)
+            .slideX(begin: 0.3, end: 0),
             const SizedBox(width: 50),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,27 +722,55 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
                   ),
                 ),
               ],
-            ),
+            )
+            .animate()
+            .fadeIn(delay: 900.ms)
+            .slideX(begin: 0.3, end: 0),
           ],
         ),
         const SizedBox(height: 30),
-        ElevatedButton(
-          onPressed: () => context.go('/booking'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF36122),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 30,
-              vertical: 15,
-            ),
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              bool isHovered = false;
+              
+              return MouseRegion(
+                onEnter: (_) => setState(() => isHovered = true),
+                onExit: (_) => setState(() => isHovered = false),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  transform: isHovered ? (Matrix4.identity()..scale(1.05)) : Matrix4.identity(),
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/book-jump'),
+                    icon: Icon(Icons.play_arrow),
+                    label: Text(
+                      'BOOK A JUMP',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isHovered ? const Color(0xFF87C540) : const Color(0xFFF36122),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 15,
+                      ),
+                      elevation: isHovered ? 8 : 4,
+                      shadowColor: isHovered 
+                        ? const Color(0xFFF36122).withOpacity(0.6) 
+                        : const Color(0xFFF36122).withOpacity(0.3),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-          child: const Text(
-            'BOOK A JUMP',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        )
+        .animate()
+        .fadeIn(delay: 1000.ms)
+        .slideY(begin: 0.5, end: 0),
       ],
     );
   }
@@ -443,24 +778,34 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
   Widget _buildFeaturesSection(bool isMobile) {
     final features = [
       {
-        'title': 'Safe Environment',
-        'description': 'All our play parks are designed with safety as the top priority, with soft play surfaces and constant supervision.',
-        'icon': Icons.shield,
+        'title': 'Ball Pits',
+        'description': 'Dive into our colorful ball pits for safe and fun play.',
+        'icon': Icons.circle,
       },
       {
-        'title': 'Age-Appropriate Zones',
-        'description': 'Dedicated areas for different age groups ensure that both toddlers and older children can play comfortably.',
-        'icon': Icons.people,
+        'title': 'Slides',
+        'description': 'Multiple slides of different heights and speeds.',
+        'icon': Icons.slideshow,
       },
       {
-        'title': 'Birthday Parties',
-        'description': 'We offer special birthday party packages that include private party rooms and play time.',
+        'title': 'Climbing Structures',
+        'description': 'Fun climbing structures to develop balance and coordination.',
+        'icon': Icons.terrain,
+      },
+      {
+        'title': 'Soft Play Areas',
+        'description': 'Specially designed soft play areas for toddlers.',
+        'icon': Icons.child_care,
+      },
+      {
+        'title': 'Party Rooms',
+        'description': 'Private party rooms available for birthdays and special events.',
         'icon': Icons.cake,
       },
       {
-        'title': 'Parent Comfort',
-        'description': 'Comfortable seating areas for parents with WiFi and refreshments available.',
-        'icon': Icons.weekend,
+        'title': 'Café Seating',
+        'description': 'Comfortable seating area for parents with café service.',
+        'icon': Icons.local_cafe,
       },
     ];
 
@@ -469,65 +814,94 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
         horizontal: isMobile ? 20 : 80,
         vertical: 80,
       ),
-      color: Colors.white,
+      color: Colors.grey[100],
       child: Column(
         children: [
           Text(
-            'WHY CHOOSE OUR PLAY PARKS?',
+            'PLAY PARK FEATURES',
             style: TextStyle(
               color: Colors.black,
               fontSize: isMobile ? 24 : 32,
               fontWeight: FontWeight.bold,
             ),
-          ),
+          )
+          .animate()
+          .fadeIn(duration: 800.ms)
+          .moveY(begin: 30, end: 0),
+          const SizedBox(height: 20),
+          const Text(
+            'Everything You Need for a Fun Day Out',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              color: Color(0xFFF36122),
+            ),
+          )
+          .animate()
+          .fadeIn(delay: 200.ms, duration: 800.ms),
           const SizedBox(height: 50),
-          isMobile
-              ? Column(
-                  children: features.map((feature) {
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (isMobile) {
+                return Column(
+                  children: features.asMap().entries.map((entry) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 30),
-                      child: _buildFeatureCard(
-                        feature['title'].toString(),
-                        feature['description'].toString(),
-                        feature['icon'] as IconData,
+                      child: _buildFeatureItem(
+                        entry.value['title']! as String,
+                        entry.value['description']! as String,
+                        entry.value['icon'] as IconData,
+                        entry.key,
                       ),
                     );
                   }).toList(),
-                )
-              : GridView.builder(
-                  shrinkWrap: true,
+                );
+              } else {
+                return GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 2,
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.5,
                     crossAxisSpacing: 30,
                     mainAxisSpacing: 30,
                   ),
                   itemCount: features.length,
                   itemBuilder: (context, index) {
-                    return _buildFeatureCard(
-                      features[index]['title'].toString(),
-                      features[index]['description'].toString(),
-                      features[index]['icon'] as IconData,
+                    return VisibilityDetector(
+                      key: Key('feature-item-$index'),
+                      onVisibilityChanged: (visibilityInfo) {
+                        if (visibilityInfo.visibleFraction > 0.2) {
+                          setState(() {});
+                        }
+                      },
+                      child: _buildFeatureItem(
+                        features[index]['title']! as String,
+                        features[index]['description']! as String,
+                        features[index]['icon'] as IconData,
+                        index,
+                      ),
                     );
                   },
-                ),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(String title, String description, IconData icon) {
+  Widget _buildFeatureItem(String title, String description, IconData icon, int index) {
     return Card(
       elevation: 5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(25),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
@@ -538,146 +912,180 @@ class _PlayParksScreenState extends State<PlayParksScreen> {
             Text(
               title,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               description,
-              style: const TextStyle(
-                color: Colors.black54,
+              textAlign: TextAlign.center,
+              style: TextStyle(
                 height: 1.5,
+                color: Colors.grey[600],
               ),
             ),
           ],
         ),
       ),
-    ).animate().fadeIn();
+    )
+    .animate()
+    .fadeIn(delay: Duration(milliseconds: 200 * index))
+    .slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad, duration: 800.ms);
   }
 
   Widget _buildCallToActionSection(bool isMobile) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 80,
-      ),
-      color: Colors.black,
+    return VisibilityDetector(
+      key: const Key('cta-section'),
+      onVisibilityChanged: (visibilityInfo) {
+        if (visibilityInfo.visibleFraction > 0.2) {
+          setState(() {});
+        }
+      },
       child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 20 : 80,
+        padding: const EdgeInsets.symmetric(
+          vertical: 80,
         ),
-        child: Column(
-          children: [
-            Text(
-              'READY FOR SOME FUN?',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: isMobile ? 24 : 32,
-                fontWeight: FontWeight.bold,
-              ),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          image: DecorationImage(
+            image: const AssetImage('images/foam.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.8),
+              BlendMode.darken,
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Visit one of our play parks today or contact us for birthday party bookings!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 40),
-            isMobile 
-            ? Column(
+          ),
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 20 : 80,
+          ),
+          child: Column(
+            children: [
+              Text(
+                'READY FOR SOME FUN?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isMobile ? 24 : 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 800.ms)
+              .shimmer(delay: 800.ms, duration: 1800.ms, color: const Color(0xFFF36122)),
+              const SizedBox(height: 20),
+              const Text(
+                'Visit one of our play parks today or contact us for birthday party bookings!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 18,
+                ),
+              )
+              .animate()
+              .fadeIn(delay: 400.ms),
+              const SizedBox(height: 40),
+              isMobile 
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildAnimatedButton(
+                      'VISIT NOW',
+                      const Color(0xFFF36122),
+                      Colors.white,
+                      () => context.go('/book-jump'),
+                      Icons.directions_run,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildAnimatedButton(
+                      'CONTACT US',
+                      Colors.transparent,
+                      Colors.white,
+                      () => context.go('/contact'),
+                      Icons.email,
+                      hasBorder: true,
+                    ),
+                  ],
+                )
+              : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/booking'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF36122),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 15,
-                        ),
-                      ),
-                      child: const Text(
-                        'VISIT NOW',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  _buildAnimatedButton(
+                    'VISIT NOW',
+                    const Color(0xFFF36122),
+                    Colors.white,
+                    () => context.go('/book-jump'),
+                    Icons.directions_run,
                   ),
-                  const SizedBox(height: 15),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/contact'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 15,
-                        ),
-                      ),
-                      child: const Text(
-                        'CONTACT US',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(width: 20),
+                  _buildAnimatedButton(
+                    'CONTACT US',
+                    Colors.transparent,
+                    Colors.white,
+                    () => context.go('/contact'),
+                    Icons.email,
+                    hasBorder: true,
                   ),
                 ],
-              )
-            : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => context.go('/booking'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF36122),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
-                    ),
-                  ),
-                  child: const Text(
-                    'VISIT NOW',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: () => context.go('/contact'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
-                    ),
-                  ),
-                  child: const Text(
-                    'CONTACT US',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+  
+  Widget _buildAnimatedButton(
+    String text,
+    Color backgroundColor,
+    Color textColor,
+    VoidCallback onPressed,
+    IconData icon, {
+    bool hasBorder = false,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          bool isHovered = false;
+          
+          return MouseRegion(
+            onEnter: (_) => setState(() => isHovered = true),
+            onExit: (_) => setState(() => isHovered = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              transform: isHovered ? (Matrix4.identity()..scale(1.05)) : Matrix4.identity(),
+              child: ElevatedButton.icon(
+                onPressed: onPressed,
+                icon: Icon(icon),
+                label: Text(
+                  text,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: backgroundColor,
+                  foregroundColor: textColor,
+                  side: hasBorder ? BorderSide(color: Colors.white) : null,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30, 
+                    vertical: 15,
+                  ),
+                  elevation: isHovered ? 12 : 4,
+                  shadowColor: isHovered ? backgroundColor.withOpacity(0.8) : backgroundColor.withOpacity(0.3),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    )
+    .animate()
+    .fadeIn(delay: hasBorder ? 800.ms : 600.ms)
+    .slideY(begin: 0.3, end: 0);
   }
 } 
